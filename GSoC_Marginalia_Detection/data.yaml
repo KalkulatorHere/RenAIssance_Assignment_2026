@@ -1,0 +1,13 @@
+# YOLOv7_85-15 Marginalia Detection Dataset Config
+# Adapted from MRE-Detecting-Marginalia project for Ultralytics YOLO
+
+train: ../YOLOv7_85-15/train/images
+val: ../YOLOv7_85-15/valid/images
+test: ../YOLOv7_85-15/test/images
+
+# Number of classes
+nc: 1
+
+# Class names
+names:
+  0: marginalia
