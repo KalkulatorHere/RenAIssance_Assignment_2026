@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OCR Preprocess Studio</title>
+  <meta name="description" content="Interactive preprocessing pipeline for scanned PDF pages. Tune parameters live and export cleaned images for OCR." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ── Top bar ─────────────────────────────────────────────────────────────── -->
+<header class="topbar">
+  <div class="topbar__brand">
+    <svg class="topbar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <path d="M7 8h10M7 12h10M7 16h6"/>
+    </svg>
+    <span>OCR Preprocess <strong>Studio</strong></span>
+  </div>
+  <div class="topbar__status" id="status-bar">
+    <span class="status-dot idle"></span>
+    <span id="status-text">Ready — load a PDF to begin</span>
+  </div>
+</header>
+
+<!-- ── Main layout ─────────────────────────────────────────────────────────── -->
+<main class="layout">
+
+  <!-- ── LEFT SIDEBAR ──────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <!-- File picker -->
+    <section class="card" id="card-load">
+      <h2 class="card__title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Load PDF
+      </h2>
+      <label class="file-btn" for="pdf-file-input">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+        Choose PDF…
+        <input type="file" id="pdf-file-input" accept=".pdf" hidden />
+      </label>
+      <div id="pdf-info" class="pdf-info hidden">
+        <span id="pdf-name" class="pdf-info__name"></span>
+        <span id="pdf-pages" class="pdf-info__pages"></span>
+      </div>
+      <div class="dpi-row">
+        <label for="dpi-input">Render DPI</label>
+        <input type="number" id="dpi-input" value="300" min="72" max="600" step="50" />
+      </div>
+    </section>
+
+    <!-- Page selector -->
+    <section class="card" id="card-pages">
+      <h2 class="card__title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="2" y="14" width="8" height="8" rx="1"/><rect x="14" y="14" width="8" height="8" rx="1"/></svg>
+        Pages
+      </h2>
+      <div class="page-control-row">
+        <button class="btn-icon" id="btn-prev-page" title="Previous page" disabled>&#8249;</button>
+        <span id="page-label" class="page-label">—</span>
+        <button class="btn-icon" id="btn-next-page" title="Next page" disabled>&#8250;</button>
+      </div>
+      <div class="thumb-strip" id="thumb-strip">
+        <div class="thumb-strip__empty">No pages loaded</div>
+      </div>
+    </section>
+
+    <!-- Parameters -->
+    <section class="card" id="card-params">
+      <h2 class="card__title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        Parameters
+      </h2>
+
+      <div class="params-grid">
+        <label class="param-label">Deskew range (°)</label>
+        <div class="param-row">
+          <input type="range" id="p-deskew-range" min="0" max="45" step="0.5" value="10" />
+          <input type="number" id="n-deskew-range" min="0" max="45" step="0.5" value="10" class="param-num" />
+        </div>
+
+        <label class="param-label">BG blur sigma</label>
+        <div class="param-row">
+          <input type="range" id="p-bg-sigma" min="10" max="200" step="5" value="80" />
+          <input type="number" id="n-bg-sigma" min="10" max="200" step="5" value="80" class="param-num" />
+        </div>
+
+        <label class="param-label">Denoise strength (h)</label>
+        <div class="param-row">
+          <input type="range" id="p-denoise-h" min="0" max="30" step="0.5" value="6" />
+          <input type="number" id="n-denoise-h" min="0" max="30" step="0.5" value="6" class="param-num" />
+        </div>
+
+        <label class="param-label">Sauvola window (px)</label>
+        <div class="param-row">
+          <input type="range" id="p-binarize-window" min="11" max="201" step="2" value="51" />
+          <input type="number" id="n-binarize-window" min="11" max="201" step="2" value="51" class="param-num" />
+        </div>
+
+        <label class="param-label">Sauvola k</label>
+        <div class="param-row">
+          <input type="range" id="p-binarize-k" min="0.01" max="0.8" step="0.01" value="0.2" />
+          <input type="number" id="n-binarize-k" min="0.01" max="0.8" step="0.01" value="0.2" class="param-num" />
+        </div>
+
+        <label class="param-label">Morph kernel (px)</label>
+        <div class="param-row">
+          <input type="range" id="p-morph-kernel" min="0" max="8" step="1" value="2" />
+          <input type="number" id="n-morph-kernel" min="0" max="8" step="1" value="2" class="param-num" />
+        </div>
+      </div>
+
+      <button class="btn btn--ghost btn--full" id="btn-reset">↩ Reset Parameters</button>
+    </section>
+
+    <!-- Output directory -->
+    <section class="card">
+      <h2 class="card__title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Output Directory
+      </h2>
+      <input type="text" id="output-dir" class="text-input" placeholder="ocr_output" value="ocr_output" />
+    </section>
+
+  </aside>
+
+  <!-- ── MAIN CONTENT ───────────────────────────────────────────────────────── -->
+  <div class="content">
+
+    <!-- Action ribbon -->
+    <div class="ribbon">
+      <button class="btn btn--primary" id="btn-preview" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></svg>
+        Preview Page
+      </button>
+      <button class="btn btn--success" id="btn-save-page" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+        Save Page
+      </button>
+      <button class="btn btn--warning" id="btn-process-all" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16,3 21,3 21,8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21,16 21,21 16,21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+        Process Entire PDF
+      </button>
+      <button class="btn btn--accent" id="btn-export-pdf" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export as PDF
+      </button>
+    </div>
+
+    <!-- Progress bar (batch) -->
+    <div class="progress-wrap hidden" id="progress-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+      <span class="progress-text" id="progress-text">0 / 0</span>
+    </div>
+
+    <!-- Preview panels -->
+    <div class="preview-area">
+      <div class="preview-panel" id="panel-original">
+        <div class="preview-panel__header">
+          <span class="preview-panel__label">Original</span>
+          <span class="preview-panel__page" id="orig-page-label"></span>
+        </div>
+        <div class="preview-panel__img-wrap">
+          <img id="img-original" class="preview-img hidden" alt="Original page" />
+          <div class="preview-placeholder" id="placeholder-orig">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+            <p>Load a PDF and<br/>select a page</p>
+          </div>
+          <div class="preview-spinner hidden" id="spinner-orig"></div>
+        </div>
+      </div>
+
+      <div class="preview-divider">
+        <div class="preview-divider__line"></div>
+        <span class="preview-divider__label">→</span>
+        <div class="preview-divider__line"></div>
+      </div>
+
+      <div class="preview-panel" id="panel-processed">
+        <div class="preview-panel__header">
+          <span class="preview-panel__label">Processed</span>
+          <span class="preview-panel__page" id="proc-page-label"></span>
+        </div>
+        <div class="preview-panel__img-wrap">
+          <img id="img-processed" class="preview-img hidden" alt="Processed page" />
+          <div class="preview-placeholder" id="placeholder-proc">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <p>Click <strong>Preview Page</strong><br/>to see the result</p>
+          </div>
+          <div class="preview-spinner hidden" id="spinner-proc"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Saved pages tracker -->
+    <div class="saved-pages-bar hidden" id="saved-pages-bar">
+      <span class="saved-pages-bar__label">Saved pages:</span>
+      <div class="saved-chips" id="saved-chips"></div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ── Toast container ────────────────────────────────────────────────────── -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
