@@ -1,5 +1,7 @@
 # GSoC Marginalia Detection — YOLOv8 Fine-tuning Demo
 
+
+
 Marginalia detection in early modern books using YOLO object detection.  
 This is a reproduction and adaptation of [MRE-Detecting-Marginalia](../MRE-Detecting-Marginalia/) for a GSoC test submission.
 

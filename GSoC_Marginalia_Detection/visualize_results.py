@@ -14,16 +14,14 @@ from PIL import Image
 from pathlib import Path
 from ultralytics import YOLO
 
-# ── Paths ─────────────────────────────────────────────────────
 BASE_DIR      = Path(__file__).resolve().parent
 DATASET_ROOT  = BASE_DIR.parent / "YOLOv7_85-15"
 RESULTS_DIR   = BASE_DIR / "results" / "predictions"
 TRAIN_RUN_DIR = BASE_DIR / "runs" / "detect" / "marginalia_1epoch"
 
 CLASS_NAMES = {0: "marginalia"}
-COLORS_GT   = "#2ECC71"   # green for ground truth
-COLORS_PRED = "#E74C3C"   # red for prediction
-
+COLORS_GT   = "#2ECC71"   
+COLORS_PRED = "#E74C3C"   
 
 def parse_yolo_label(label_path: Path):
     boxes = []
@@ -62,7 +60,6 @@ def draw_boxes(ax, boxes_xyxy, color, label_prefix, scores=None):
                 bbox=dict(facecolor=color, alpha=0.8, pad=1))
 
 
-# ── 1. Prediction comparisons ─────────────────────────────────
 def generate_prediction_comparisons(model_path: Path, n_images: int = 8):
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     model = YOLO(str(model_path))
@@ -77,12 +74,10 @@ def generate_prediction_comparisons(model_path: Path, n_images: int = 8):
         w, h = img.size
         img_np = np.array(img)
 
-        # Ground truth
         lbl_path = test_lbl_dir / (img_path.stem + ".txt")
         gt_boxes = parse_yolo_label(lbl_path)
         gt_xyxy  = [yolo_to_xyxy(b, w, h) for b in gt_boxes]
 
-        # Predictions
         results = model.predict(str(img_path), imgsz=640, conf=0.25, verbose=False)
         pred_boxes  = []
         pred_scores = []
@@ -92,7 +87,6 @@ def generate_prediction_comparisons(model_path: Path, n_images: int = 8):
                 pred_boxes.append((x1, y1, x2, y2))
                 pred_scores.append(float(box.conf[0].cpu()))
 
-        # Plot side by side
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
 
         ax1.imshow(img_np)
@@ -114,7 +108,6 @@ def generate_prediction_comparisons(model_path: Path, n_images: int = 8):
         print(f"  Saved: {save_path.name}")
 
 
-# ── 2. Grid of all test predictions ───────────────────────────
 def generate_prediction_grid(model_path: Path):
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     model = YOLO(str(model_path))
@@ -152,7 +145,6 @@ def generate_prediction_grid(model_path: Path):
         ax.set_title(img_path.name, fontsize=7)
         ax.axis("off")
 
-    # Hide remaining axes
     for idx in range(n, len(axes)):
         axes[idx].axis("off")
 
@@ -165,9 +157,7 @@ def generate_prediction_grid(model_path: Path):
     print(f"  Saved: {save_path.name}")
 
 
-# ── Main ──────────────────────────────────────────────────────
 if __name__ == "__main__":
-    # Locate best weights
     best = TRAIN_RUN_DIR / "weights" / "best.pt"
     if not best.exists():
         best = TRAIN_RUN_DIR / "weights" / "last.pt"

@@ -10,18 +10,16 @@ Hardware: NVIDIA RTX 3050 Laptop GPU (4 GB VRAM)
 from ultralytics import YOLO
 from pathlib import Path
 
-# ── Configuration ─────────────────────────────────────────────
 DATA_YAML  = Path(__file__).resolve().parent / "data.yaml"
 PROJECT    = Path(__file__).resolve().parent / "runs" / "detect"
 NAME       = "marginalia_1epoch"
 
-MODEL      = "yolov8s.pt"        # small model — fits in 4 GB VRAM
-EPOCHS     = 1                   # demo run
-IMG_SIZE   = 640                 # safe for 4 GB VRAM
-BATCH_SIZE = 8                   # conservative for RTX 3050
-DEVICE     = 0                   # GPU 0
-WORKERS    = 4                   # data-loading threads
-
+MODEL      = "yolov8s.pt"        
+EPOCHS     = 1                   
+IMG_SIZE   = 640               
+BATCH_SIZE = 8                 
+DEVICE     = 0                  
+WORKERS    = 4                   
 
 def main():
     print("=" * 60)
@@ -34,10 +32,8 @@ def main():
     print(f"  Batch Size: {BATCH_SIZE}")
     print()
 
-    # Load pre-trained YOLOv8s
     model = YOLO(MODEL)
 
-    # Train for 1 epoch
     results = model.train(
         data=str(DATA_YAML),
         epochs=EPOCHS,
@@ -50,9 +46,9 @@ def main():
         exist_ok=True,
         pretrained=True,
         verbose=True,
-        plots=True,          # save training plots
-        save=True,           # save checkpoints
-        val=True,            # run validation after each epoch
+        plots=True,          
+        save=True,           
+        val=True,            
     )
 
     print("\n" + "=" * 60)
@@ -61,7 +57,6 @@ def main():
     print(f"  Results saved to: {PROJECT / NAME}")
     print()
 
-    # ── Run validation on the test set ────────────────────────
     print("Running evaluation on TEST set...")
     best_weights = PROJECT / NAME / "weights" / "best.pt"
     if not best_weights.exists():

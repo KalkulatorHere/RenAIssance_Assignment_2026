@@ -1,10 +1,3 @@
-"""
-Dataset Analysis Script for YOLOv7_85-15 Marginalia Dataset
-============================================================
-Produces statistics, class distribution, bounding box analysis,
-and sample annotation visualizations.
-"""
-
 import os
 import sys
 import random
@@ -15,7 +8,6 @@ from PIL import Image
 from pathlib import Path
 from collections import Counter
 
-# ── Paths ──────────────────────────────────────────────────────
 DATASET_ROOT = Path(__file__).resolve().parent.parent / "YOLOv7_85-15"
 OUTPUT_DIR   = Path(__file__).resolve().parent / "results" / "dataset_analysis"
 
@@ -29,11 +21,6 @@ CLASS_NAMES = {0: "marginalia"}
 
 
 def parse_yolo_label(label_path: Path):
-    """Parse a YOLO-format label file.
-
-    Each line: <class_id> <x_center> <y_center> <width> <height>
-    All values normalised to [0, 1] relative to image dimensions.
-    """
     boxes = []
     if not label_path.exists() or label_path.stat().st_size == 0:
         return boxes
@@ -48,7 +35,6 @@ def parse_yolo_label(label_path: Path):
 
 
 def yolo_to_xyxy(box, img_w, img_h):
-    """Convert normalised YOLO box → pixel (x1, y1, x2, y2)."""
     _, x_c, y_c, w, h = box
     x1 = (x_c - w / 2) * img_w
     y1 = (y_c - h / 2) * img_h
@@ -57,7 +43,6 @@ def yolo_to_xyxy(box, img_w, img_h):
     return x1, y1, x2, y2
 
 
-# ── 1. Split statistics ───────────────────────────────────────
 def compute_split_stats():
     print("=" * 60)
     print("DATASET SPLIT STATISTICS")
@@ -110,12 +95,10 @@ def compute_split_stats():
     return all_widths, all_heights, box_counts
 
 
-# ── 2. Bounding-box analysis plots ────────────────────────────
 def plot_bbox_analysis(widths, heights, box_counts, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 
-    # (a) width × height scatter
     ax = axes[0]
     ax.scatter(widths, heights, alpha=0.3, s=10, c="#6C5CE7")
     ax.set_xlabel("Box Width (normalised)")
@@ -124,7 +107,6 @@ def plot_bbox_analysis(widths, heights, box_counts, out_dir: Path):
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
 
-    # (b) boxes-per-image histogram
     ax = axes[1]
     ax.hist(box_counts, bins=range(0, max(box_counts) + 2),
             color="#00B894", edgecolor="white")
@@ -132,7 +114,6 @@ def plot_bbox_analysis(widths, heights, box_counts, out_dir: Path):
     ax.set_ylabel("Count")
     ax.set_title("Annotations per Image")
 
-    # (c) area distribution
     areas = [w * h for w, h in zip(widths, heights)]
     ax = axes[2]
     ax.hist(areas, bins=40, color="#FD79A8", edgecolor="white")
@@ -147,12 +128,10 @@ def plot_bbox_analysis(widths, heights, box_counts, out_dir: Path):
     print(f"Saved bbox analysis → {save_path}")
 
 
-# ── 3. Sample annotation visualisation ────────────────────────
 def visualize_samples(n=6, out_dir: Path = OUTPUT_DIR):
     out_dir.mkdir(parents=True, exist_ok=True)
     random.seed(42)
 
-    # Collect images that have boxes (positive examples)
     positives = []
     for name, split_dir in SPLITS.items():
         img_dir = split_dir / "images"
@@ -202,7 +181,6 @@ def visualize_samples(n=6, out_dir: Path = OUTPUT_DIR):
     print(f"Saved sample annotations → {save_path}")
 
 
-# ── 4. Augmentation breakdown ─────────────────────────────────
 def augmentation_breakdown():
     print("AUGMENTATION ANALYSIS (train split)")
     print("=" * 60)
@@ -230,8 +208,6 @@ def augmentation_breakdown():
     print(f"  {'TOTAL':<16} {sum(aug_types.values()):>6}")
     print()
 
-
-# ── Main ──────────────────────────────────────────────────────
 if __name__ == "__main__":
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
