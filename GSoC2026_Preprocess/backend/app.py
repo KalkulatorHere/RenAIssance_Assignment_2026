@@ -43,7 +43,6 @@ from backend.preprocess_core import (
     preprocess_page,
 )
 
-# ───────────────────────────────────────────────────────────────────────────────
 app = FastAPI(title="OCR Preprocess UI", version="1.0.0")
 
 app.add_middleware(
@@ -53,18 +52,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Thread pool for CPU-bound preprocessing (avoids blocking the event loop)
 _pool = ThreadPoolExecutor(max_workers=max(1, (os.cpu_count() or 2) - 1))
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# In-memory session store
-# ═══════════════════════════════════════════════════════════════════════════════
-
 @dataclass
 class Session:
-    pdf_path: str                              # original PDF (temp file)
-    raw_pages: list[np.ndarray]               # BGR arrays, one per page
+    pdf_path: str                              
+    raw_pages: list[np.ndarray]               
     processed: dict[int, np.ndarray] = field(default_factory=dict)
     saved_paths: dict[int, str] = field(default_factory=dict)
 
@@ -77,14 +71,10 @@ class BatchJob:
     finished: bool = False
 
 
-# Global stores (single-process; sufficient for a local desktop tool)
 _sessions: dict[str, Session] = {}
 _jobs: dict[str, BatchJob] = {}
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Helpers
-# ═══════════════════════════════════════════════════════════════════════════════
 
 def _get_session(session_id: str) -> Session:
     s = _sessions.get(session_id)
@@ -123,9 +113,6 @@ def _process_one(raw: np.ndarray, params: dict) -> np.ndarray:
     )
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Routes – PDF loading
-# ═══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/load-pdf")
 async def load_pdf(file: UploadFile = File(...), dpi: int = Form(300)):
@@ -136,7 +123,6 @@ async def load_pdf(file: UploadFile = File(...), dpi: int = Form(300)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
 
-    # Write upload to a temp file (pdf_to_images needs a path)
     suffix = ".pdf"
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         content = await file.read()
@@ -158,9 +144,6 @@ async def load_pdf(file: UploadFile = File(...), dpi: int = Form(300)):
     return {"session_id": session_id, "page_count": len(raw_pages), "dpi": dpi}
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Routes – Page preview (original + processed)
-# ═══════════════════════════════════════════════════════════════════════════════
 
 @app.get("/page/{page_idx}/original")
 async def get_original(page_idx: int, session_id: str):
@@ -201,10 +184,6 @@ async def preview_page(page_idx: int, body: dict):
     return Response(content=jpeg, media_type="image/jpeg")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Routes – Save
-# ═══════════════════════════════════════════════════════════════════════════════
-
 @app.post("/save-page")
 async def save_page(body: dict):
     """
@@ -221,7 +200,6 @@ async def save_page(body: dict):
 
     loop = asyncio.get_event_loop()
 
-    # Use cached result if params haven't changed, otherwise re-process
     result = s.processed.get(page_idx)
     if result is None:
         try:
@@ -239,9 +217,6 @@ async def save_page(body: dict):
     return {"path": os.path.abspath(out_path), "page_idx": page_idx}
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Routes – Batch processing
-# ═══════════════════════════════════════════════════════════════════════════════
 
 def _batch_worker(session_id: str, params: dict, output_dir: str, job_id: str):
     """Blocking batch-process loop – runs in thread pool."""
@@ -278,7 +253,6 @@ async def process_all(body: dict, background_tasks: BackgroundTasks):
     job_id = str(uuid.uuid4())
     _jobs[job_id] = BatchJob(total=len(s.raw_pages))
 
-    # Run in thread pool via background task
     loop = asyncio.get_event_loop()
     background_tasks.add_task(
         loop.run_in_executor,
@@ -303,10 +277,6 @@ async def job_status(job_id: str):
         "errors": job.errors,
     }
 
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Routes – PDF export
-# ═══════════════════════════════════════════════════════════════════════════════
 
 @app.post("/export-pdf")
 async def export_pdf(body: dict):
@@ -356,10 +326,6 @@ async def export_pdf(body: dict):
     )
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Routes – Session cleanup
-# ═══════════════════════════════════════════════════════════════════════════════
-
 @app.delete("/session/{session_id}")
 async def delete_session(session_id: str):
     """Free cached page images and delete the temp PDF."""
@@ -370,11 +336,6 @@ async def delete_session(session_id: str):
         except OSError:
             pass
     return {"deleted": session_id}
-
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Static files – serve the frontend
-# ═══════════════════════════════════════════════════════════════════════════════
 
 _FRONTEND = Path(__file__).resolve().parent.parent / "frontend"
 if _FRONTEND.exists():

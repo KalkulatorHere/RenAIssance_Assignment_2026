@@ -15,7 +15,6 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-# ── Dynamic import of "ocr_preprocess (1).py" ────────────────────────────────
 _HERE = Path(__file__).resolve().parent.parent          # project root
 _PIPELINE_PATH = _HERE / "ocr_preprocess (1).py"
 
@@ -36,14 +35,9 @@ preprocess_page: callable      = _module.preprocess_page
 images_to_pdf: callable        = _module.images_to_pdf
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Image encode helpers
-# ═══════════════════════════════════════════════════════════════════════════════
-
 def encode_jpeg(bgr: np.ndarray, quality: int = 85) -> bytes:
     """Encode a BGR ndarray to JPEG bytes for HTTP response."""
     if bgr.ndim == 2:
-        # Grayscale / binary – replicate to 3ch so JPEG encoder is happy
         bgr = cv2.cvtColor(bgr, cv2.COLOR_GRAY2BGR)
     ok, buf = cv2.imencode(".jpg", bgr, [cv2.IMWRITE_JPEG_QUALITY, quality])
     if not ok:
@@ -61,9 +55,7 @@ def encode_png(bgr: np.ndarray) -> bytes:
     return buf.tobytes()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Default pipeline parameters
-# ═══════════════════════════════════════════════════════════════════════════════
+
 
 DEFAULT_PARAMS = {
     "dpi":             300,

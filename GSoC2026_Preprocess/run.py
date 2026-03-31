@@ -14,7 +14,7 @@ import uvicorn
 
 def _open_browser(host: str, port: int):
     url = f"http://{host}:{port}"
-    time.sleep(1.5)          # give uvicorn a moment to bind
+    time.sleep(1.5)         
     webbrowser.open(url)
 
 
