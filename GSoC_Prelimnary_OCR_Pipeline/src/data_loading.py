@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import fitz  # PyMuPDF
+import fitz  
 
 def pdf_to_images(pdf_path: str, dpi: int) -> list[np.ndarray]:
     """Convert a PDF document to a list of OpenCV BGR images."""

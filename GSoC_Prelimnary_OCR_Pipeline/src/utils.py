@@ -10,10 +10,8 @@ def normalize(text: str, keep_newlines: bool = False, lower: bool = False) -> st
     text = str(text)
     text = unicodedata.normalize("NFKC", text)
 
-    # Fix hyphenated line breaks first
     text = re.sub(r"-\s*\n\s*", "", text)
 
-    # Remove control chars that mess up comparison
     text = re.sub(r"[\u200b\u200c\u200d\u2060\u00ad]", "", text)
 
     if keep_newlines:
